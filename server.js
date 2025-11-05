@@ -83,6 +83,67 @@ app.post('/cookie-echo', express.json(), (req, res) => {
     });
 });
 
+// Fake user data pool
+const generateFakeUsers = () => {
+    const firstNames = ['Emma', 'Eve', 'Charles', 'Janet', 'Tobias', 'Byron', 'George', 'Rachel', 'Lindsay', 'Michael', 'Tracey', 'Emma', 'Charles', 'George', 'Lindsay', 'Michael', 'Tobias', 'Byron', 'Janet', 'Rachel'];
+    const lastNames = ['Wong', 'Holt', 'Morris', 'Weaver', 'Funke', 'Fields', 'Edwards', 'Howell', 'Ferguson', 'Lawson', 'Ramos', 'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez'];
+    const domains = ['reqres.in', 'example.com', 'test.com', 'demo.org'];
+    
+    const users = [];
+    for (let i = 1; i <= 50; i++) {
+        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        const domain = domains[Math.floor(Math.random() * domains.length)];
+        users.push({
+            id: i,
+            email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${domain}`,
+            first_name: firstName,
+            last_name: lastName,
+            avatar: `https://reqres.in/img/faces/${i}-image.jpg`
+        });
+    }
+    return users;
+};
+
+const fakeUsers = generateFakeUsers();
+
+// Paginated users endpoint
+app.get('/api/users', (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const per_page = parseInt(req.query.per_page) || 6;
+        
+        // Validate pagination parameters
+        if (page < 1) {
+            return res.status(400).json({ error: 'Page must be greater than 0' });
+        }
+        if (per_page < 1) {
+            return res.status(400).json({ error: 'per_page must be greater than 0' });
+        }
+        
+        // Calculate pagination
+        const totalUsers = fakeUsers.length;
+        const totalPages = Math.ceil(totalUsers / per_page);
+        const startIndex = (page - 1) * per_page;
+        const endIndex = startIndex + per_page;
+        
+        // Rotate data by shifting the start index based on page number
+        // This creates a "rotating" effect where different pages show different users
+        const rotatedStartIndex = (startIndex + (page - 1) * 2) % totalUsers;
+        const paginatedUsers = [];
+        
+        for (let i = 0; i < per_page; i++) {
+            const userIndex = (rotatedStartIndex + i) % totalUsers;
+            paginatedUsers.push(fakeUsers[userIndex]);
+        }
+        
+        res.status(200).json(paginatedUsers);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
