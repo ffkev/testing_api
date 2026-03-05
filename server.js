@@ -32,7 +32,7 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
+        cb(null, file.originalname);
     }
 });
 
@@ -43,12 +43,26 @@ app.use(express.static('uploads'));
 
 // Create an endpoint to handle file uploads
 app.post('/upload', upload, (req, res) => {
+    console.log('\n--- UPLOAD REQUEST ---');
+    console.log('Time:', new Date().toISOString());
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Body fields:', req.body);
+    console.log('Files:', req.files?.map(f => ({
+        fieldname: f.fieldname,
+        originalname: f.originalname,
+        mimetype: f.mimetype,
+        size: f.size,
+    })));
+
     try {
         const files = req.files;
         if (!files || files.length === 0) {
-            return res.status(400).send({ message: 'No files uploaded' });
+            const response = { message: 'No files uploaded' };
+            console.log('Response [400]:', JSON.stringify(response, null, 2));
+            console.log('--- END UPLOAD ---\n');
+            return res.status(400).send(response);
         }
-        res.status(200).send({
+        const response = {
             message: 'Files uploaded successfully',
             files: files.map(file => ({
                 originalName: file.originalname,
@@ -56,9 +70,13 @@ app.post('/upload', upload, (req, res) => {
                 path: file.path,
                 size: file.size,
             }))
-        });
+        };
+        console.log('Response [200]:', JSON.stringify(response, null, 2));
+        console.log('--- END UPLOAD ---\n');
+        res.status(200).send(response);
     } catch (error) {
-        console.error(error);
+        console.error('Response [500]:', error);
+        console.log('--- END UPLOAD ---\n');
         res.status(500).send({ message: 'File upload failed', error });
     }
 });
