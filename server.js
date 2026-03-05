@@ -6,8 +6,11 @@ const app = express();
 const cors = require('cors');
 const PORT = 3000;
 
-// Enable CORS for all origins
-app.use(cors());
+// Enable CORS
+app.use(cors({
+    origin: 'http://localhost:5000',
+    credentials: true,
+}));
 
 // Ensure the uploads directory exists
 const uploadDir = path.join(__dirname, 'uploads');
