@@ -6,11 +6,19 @@ const app = express();
 const cors = require('cors');
 const PORT = 3000;
 
-// Enable CORS
+// Enable CORS (including Private Network Access for requests from public origins to localhost)
 app.use(cors({
-    origin: 'http://localhost:5000',
+    origin: ['http://localhost:5000', 'https://ff-debug-service-frontend-neqmd5szxa-uc.a.run.app'],
     credentials: true,
 }));
+
+// Handle Private Network Access preflight header
+app.use((req, res, next) => {
+    if (req.headers['access-control-request-private-network']) {
+        res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    }
+    next();
+});
 
 // Ensure the uploads directory exists
 const uploadDir = path.join(__dirname, 'uploads');
